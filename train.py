@@ -39,6 +39,7 @@ def train(hyp, opt, device, tb_writer=None):
     epochs, batch_size, total_batch_size, weights, rank = \
         opt.epochs, opt.batch_size, opt.total_batch_size, opt.weights, opt.global_rank
 
+    save_epochs = opt.save_epochs
     # TODO: Use DDP logging. Only the first process is allowed to log.
     # Save run settings
     with open(log_dir / 'hyp.yaml', 'w') as f:
@@ -343,8 +344,8 @@ def train(hyp, opt, device, tb_writer=None):
 
                 # Save last, best and delete
                 torch.save(ckpt, last)
-                if epoch >= (epochs-30):
-                    torch.save(ckpt, last.replace('.pt','_{:03d}.pt'.format(epoch)))
+                if epoch >= (epochs-save_epochs):
+                    torch.save(ckpt, last.replace('.pt','_{:03d}.pt'.format(epoch + 1)))
                 if best_fitness == fi:
                     torch.save(ckpt, best)
                 del ckpt
@@ -378,6 +379,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', type=str, default='data/coco128.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='', help='hyperparameters path, i.e. data/hyp.scratch.yaml')
     parser.add_argument('--epochs', type=int, default=300)
+    parser.add_argument('--save-epochs', type=int, default=5, help='how many last epochs to save')
     parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs')
     parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='train,test sizes')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
