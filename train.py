@@ -78,9 +78,15 @@ def train(hyp, opt, device, tb_writer=None):
     accumulate = max(round(nbs / total_batch_size), 1)  # accumulate loss before optimizing
     hyp['weight_decay'] *= total_batch_size * accumulate / nbs  # scale weight_decay
 
+    freeze = opt.freeze
+    freeze = [f'model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
+    
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
     for k, v in model.named_parameters():
         v.requires_grad = True
+        if any(x in k for x in freeze):
+            LOGGER.info(f'freezing {k}')
+            v.requires_grad = False
         if '.bias' in k:
             pg2.append(v)  # biases
         elif '.weight' in k and '.bn' not in k:
@@ -378,6 +384,7 @@ if __name__ == '__main__':
     parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
     parser.add_argument('--data', type=str, default='data/coco128.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='', help='hyperparameters path, i.e. data/hyp.scratch.yaml')
+    parser.add_argument('--freeze', nargs='+', type=int, default=[0], help='Freeze layers: backbone=10, 12 or 14 (p5, p6, p7), first3=0 1 2')
     parser.add_argument('--epochs', type=int, default=300)
     parser.add_argument('--save-epochs', type=int, default=5, help='how many last epochs to save')
     parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs')
