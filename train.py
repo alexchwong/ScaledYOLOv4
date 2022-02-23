@@ -85,7 +85,7 @@ def train(hyp, opt, device, tb_writer=None):
     for k, v in model.named_parameters():
         v.requires_grad = True
         if any(x in k for x in freeze):
-            LOGGER.info(f'freezing {k}')
+            print(f'freezing {k}')
             v.requires_grad = False
         if '.bias' in k:
             pg2.append(v)  # biases
